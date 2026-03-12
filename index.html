@@ -2,6 +2,9 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>像素乌托邦 - AgentCity</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -72,7 +75,7 @@
             <h2>🏙️ 像素乌托邦</h2>
             <input type="email" id="login-email" placeholder="邮箱">
             <input type="password" id="login-password" placeholder="密码">
-            <button onclick="auth.login()">登录 / 注册</button>
+            <button id="login-btn" onclick="console.log("click");auth.login()">登录 / 注册</button>
         </div>
     </div>
     <h1>🏙️ 像素乌托邦 - AgentCity</h1>
@@ -115,6 +118,8 @@ async function loadAssets() {
 }
 
 const auth = {
+    test: function() { alert("auth loaded!"); },
+
     currentUser: null, users: {}, claimTarget: null,
     init() {
         const s=localStorage.getItem('agentcity_users');if(s)this.users=JSON.parse(s);
