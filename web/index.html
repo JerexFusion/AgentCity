@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>像素乌托邦 - AgentCity</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; min-height: 100vh; display: flex; flex-direction: column; align-items: center; font-family: 'Press Start 2P', monospace; color: #eee; padding: 15px; }
+        h1 { font-size: 16px; color: #ffb7c5; margin-bottom: 10px; }
+        
+        #login-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 200; }
+        .login-box { background: #16213e; border: 3px solid #ff69b4; padding: 30px; text-align: center; max-width: 320px; }
+        .login-box h2 { color: #ff69b4; font-size: 14px; margin-bottom: 20px; }
+        .login-box input { width: 100%; padding: 10px; margin: 8px 0; background: #0f3460; border: 1px solid #e94560; color: #fff; font-size: 10px; }
+        .login-box button { width: 100%; padding: 12px; background: #e94560; color: #fff; border: none; font-size: 10px; cursor: pointer; margin-top: 10px; }
+        
+        #game-wrapper { display: none; gap: 15px; }
+        #gameCanvas { border: 4px solid #ff69b4; image-rendering: pixelated; }
+        
+        #agent-panel { width: 170px; background: #16213e; border: 2px solid #0f3460; padding: 10px; }
+        #agent-panel h3 { color: #ff69b4; font-size: 9px; margin-bottom: 10px; text-align: center; }
+        .agent-card { background: #0f3460; padding: 6px; margin-bottom: 6px; cursor: pointer; }
+        .agent-card.owned { border: 2px solid #ffd700; }
+        
+        #ui-bar { width: 800px; margin-top: 10px; display: none; justify-content: space-between; padding: 10px; background: linear-gradient(90deg,#16213e,#0f3460); border: 2px solid #e94560; font-size: 8px; }
+        
+        #controls { margin-top: 10px; display: none; gap: 8px; }
+        button { padding: 10px 14px; background: #e94560; color: #fff; border: none; font-size: 7px; cursor: pointer; }
+        
+        #log { width: 800px; height: 50px; margin-top: 10px; background: #0a0a1a; border: 2px solid #16213e; overflow-y: auto; padding: 8px; font-size: 6px; display: none; }
+        
+        #claim-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #16213e; border: 3px solid #4ecdc4; padding: 20px; display: none; z-index: 150; text-align: center; font-size: 8px; }
+        
+        .user-badge { display: inline-block; padding: 2px 6px; background: #4ecdc4; color: #000; font-size: 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>🏙️ 像素乌托邦</h2>
+            <input type="email" id="login-email" placeholder="邮箱">
+            <input type="password" id="login-password" placeholder="密码">
+            <button onclick="auth.login()">登录 / 注册</button>
+        </div>
+    </div>
+    
+    <h1>🏙️ 像素乌托邦 - AgentCity</h1>
+    
+    <div id="game-wrapper">
+        <canvas id="gameCanvas" width="640" height="480"></canvas>
+        <div id="agent-panel">
+            <h3>🤖 居民列表 <span id="user-badge" class="user-badge" style="display:none"></span></h3>
+            <div id="agent-list"></div>
+        </div>
+    </div>
+    
+    <div id="ui-bar">
+        <span>💎<span id="currency">0</span></span>
+        <span>😊<span id="happiness">50</span>%</span>
+        <span>⏰<span id="time">08:00</span></span>
+        <span>👥<span id="agent-count">0</span></span>
+        <span>👤我的:<span id="my-agents">0</span>个</span>
+    </div>
+    
+    <div id="controls">
+        <button onclick="game.togglePause()">⏯️暂停</button>
+        <button onclick="game.addRandomAgent()">➕添加</button>
+        <button onclick="game.speedUp()">⚡加速</button>
+        <button onclick="game.showCards()">🃏成果</button>
+        <button onclick="auth.logout()">🚪退出</button>
+    </div>
+    
+    <div id="log"></div>
+    
+    <div id="claim-modal">
+        <p id="claim-desc">确认认领？</p>
+        <button onclick="auth.confirmClaim()">✅确认</button>
+        <button onclick="document.getElementById('claim-modal').style.display='none'">❌取消</button>
+    </div>
+
+<script>
+const auth = {
+    currentUser: null, users: {}, claimTarget: null,
+    
+    init() {
+        const saved = localStorage.getItem('agentcity_users');
+        if (saved) this.users = JSON.parse(saved);
+        const loggedIn = localStorage.getItem('agentcity_current');
+        if (loggedIn) { this.currentUser = JSON.parse(loggedIn); this.showGame(); }
+    },
+    
+    login() {
+        const email = document.getElementById('login-email').value.trim();
+        const pwd = document.getElementById('login-password').value;
+        if (!email || !pwd || !email.includes('@')) { alert('请输入有效邮箱和密码'); return; }
+        
+        if (this.users[email]) {
+            if (this.users[email].password !== pwd) { alert('密码错误'); return; }
+            this.currentUser = { email: email, name: this.users[email].name };
+        } else {
+            this.users[email] = { password: pwd, name: email.split('@')[0], claimed: [] };
+            this.saveUsers();
+            this.currentUser = { email: email, name: email.split('@')[0] };
+        }
+        localStorage.setItem('agentcity_current', JSON.stringify(this.currentUser));
+        this.showGame();
+    },
+    
+    logout() {
+        localStorage.removeItem('agentcity_current');
+        this.currentUser = null;
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('game-wrapper').style.display = 'none';
+        document.getElementById('ui-bar').style.display = 'none';
+        document.getElementById('controls').style.display = 'none';
+        document.getElementById('log').style.display = 'none';
+    },
+    
+    saveUsers() { localStorage.setItem('agentcity_users', JSON.stringify(this.users)); },
+    
+    showGame() {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('game-wrapper').style.display = 'flex';
+        document.getElementById('ui-bar').style.display = 'flex';
+        document.getElementById('controls').style.display = 'flex';
+        document.getElementById('log').style.display = 'block';
+        document.getElementById('user-badge').textContent = this.currentUser.name;
+        document.getElementById('user-badge').style.display = 'inline-block';
+        if (!window.game) window.game = new Game();
+        game.log('👋 欢迎，' + this.currentUser.name);
+    },
+    
+    claimAgent(id) {
+        const a = game.agents.find(ag => ag.id === id);
+        if (!a) return;
+        if (a.owner) { alert('已被认领'); return; }
+        if (this.currentUser.claimed && this.currentUser.claimed.length >= 3) { alert('最多3个'); return; }
+        this.claimTarget = id;
+        document.getElementById('claim-desc').textContent = '确认认领 ' + a.name + '？';
+        document.getElementById('claim-modal').style.display = 'block';
+    },
+    
+    confirmClaim() {
+        if (this.claimTarget) {
+            const a = game.agents.find(ag => ag.id === this.claimTarget);
+            if (a) {
+                a.owner = this.currentUser.email;
+                this.currentUser.claimed = this.currentUser.claimed || [];
+                this.currentUser.claimed.push(this.claimTarget);
+                this.users[this.currentUser.email].claimed = this.users[this.currentUser.email].claimed || [];
+                this.users[this.currentUser.email].claimed.push(this.claimTarget);
+                this.saveUsers();
+                game.log('🎯 认领了 ' + a.name);
+                game.updateUI();
+            }
+            this.claimTarget = null;
+        }
+        document.getElementById('claim-modal').style.display = 'none';
+    }
+};
+
+const CFG = { TILE: 32, W: 20, H: 15 };
+
+const Draw = {
+    rect(x,y,w,h,c) { return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+c+'"/>'; },
+    cherry(x,y) {
+        let s = this.rect(x+11,y+16,10,16,'#8B4513');
+        for(let py=0; py<4; py++) for(let px=0; px<5; px++) if(Math.abs(px-2)+Math.abs(py-1.5)<3) s += this.rect(x+px*6+2, y+py*6, 6, 6, (px+py)%2===0?'#FFB7C5':'#FFC0CB');
+        return s;
+    },
+    build(x,y,t) {
+        let s = '';
+        const ts = CFG.TILE;
+        if(t==='cafe'){s+=this.rect(x,y,ts*3,ts*3,'#F5DEB3')+this.rect(x,y,ts*3,ts*0.5,'#8B4513')+this.rect(x+4,y+ts*0.8,ts*0.6,ts*0.6,'#87CEEB')+this.rect(x+ts*1.4,y+ts*0.8,ts*0.6,ts*0.6,'#87CEEB')+this.rect(x+ts*0.5,y+ts*1.8,ts*2,ts*0.5,'#FF6B6B');}
+        else if(t==='library'){s+=this.rect(x,y,ts*3,ts*3,'#ADD8E6')+this.rect(x,y,ts*3,ts*0.4,'#696969')+this.rect(x+ts*0.3,y+ts*0.6,ts*2.4,ts*1.2,'#B0C4DE');for(let i=0;i<4;i++)s+=this.rect(x+4,y+ts*2+i*4,ts*2.5,2,'#4169E1');}
+        else if(t==='arcade'){s+=this.rect(x,y,ts*3,ts*3,'#2F2F4F');for(let i=0;i<5;i++)s+=this.rect(x+ts*0.3+i*ts*0.5,y+4,ts*0.3,ts*0.3,i%2===0?'#FF1493':'#9400D3');for(let i=0;i<3;i++){s+=this.rect(x+ts*0.3+i*ts*0.9,y+ts*1.5,ts*0.7,ts*1.2,'#4169E1')+this.rect(x+ts*0.4+i*ts*0.9,y+ts*1.7,ts*0.5,ts*0.5,'#000');}}
+        else if(t==='house'){s+=this.rect(x,y,ts*3,ts*3,'#DEB887')+this.rect(x,y,ts*3,ts*0.6,'#8B4513')+this.rect(x+ts*1.1,y+ts*1.2,ts*0.7,ts*1.5,'#654321')+this.rect(x+4,y+ts*0.8,ts*0.5,ts*0.5,'#87CEEB')+this.rect(x+ts*1.8,y+ts*0.8,ts*0.5,ts*0.5,'#87CEEB');}
+        else if(t==='beach'){s+=this.rect(x,y,ts*6,ts*4,'#E8D174')+this.rect(x,y,ts*6,ts*1.5,'#4A90D9');for(let i=0;i<8;i++)if(i%2===0)s+=this.rect(x+i*ts*0.7,y+ts*1.2,ts*0.4,ts*0.2,'#5CACEE');s+=this.rect(x+ts*0.3,y+ts*2.2,ts*0.2,ts*1.5,'#8B4513');}
+        else if(t==='park'){s+=this.rect(x,y,ts*5,ts*4,'#90EE90');s+=this.cherry(x+ts*0.3,y+ts*0.2)+this.cherry(x+ts*3,y+ts*1.5)+this.rect(x+ts*2,y+ts*2.8,ts*0.8,ts*0.3,'#8B4513')+this.rect(x+ts*2.5,y+ts*1.5,ts*1.5,ts*0.3,'#4169E1');}
+        return s;
+    },
+    agent(x,y,c,owned) {
+        const ts = CFG.TILE, cx = x + ts/2, cy = y + ts/2;
+        let s = this.rect(cx-8,cy-2,16,10,c) + this.rect(cx-6,cy-12,12,10,'#FFCC99') + this.rect(cx-6,cy-14,12,4,'#4A3728') + this.rect(cx-4,cy-10,2,2,'#000') + this.rect(cx+2,cy-10,2,2,'#000') + this.rect(cx-8,cy+10,16,3,'rgba(0,0,0,0.2)');
+        if(owned) s += '<rect x="'+(cx-10)+'" y="'+(cy-16)+'" width="20" height="28" fill="none" stroke="#ffd700" stroke-width="2"/>';
+        return s;
+    }
+};
+
+class World {
+    constructor() {
+        this.w = CFG.W; this.h = CFG.H;
+        this.tiles = []; this.buildings = {};
+        this.init();
+    }
+    init() {
+        for(let y=0;y<this.h;y++){this.tiles[y]=[];for(let x=0;x<this.w;x++)this.tiles[y][x]=0;}
+        [5,10].forEach(p=>{for(let x=0;x<this.w;x++)this.tiles[p][x]=1});
+        [4,12].forEach(p=>{for(let y=0;y<this.h;y++)this.tiles[y][p]=1});
+        this.buildings = { park:{x:1,y:1,w:5,h:3,t:'park',n:'🌸樱花公园'}, cafe:{x:6,y:1,w:3,h:3,t:'cafe',n:'☕咖啡厅'}, library:{x:13,y:1,w:3,h:3,t:'library',n:'📚图书馆'}, arcade:{x:1,y:6,w:3,h:3,t:'arcade',n:'🎮游戏机厅'}, h1:{x:6,y:6,w:3,h:3,t:'house',n:'🏠住宅A'}, h2:{x:13,y:6,w:3,h:3,t:'house',n:'🏠住宅B'}, beach:{x:13,y:11,w:6,h:4,t:'beach',n:'🏖️海滩'} };
+    }
+    render() {
+        let svg = '<svg width="640" height="480" xmlns="http://www.w3.org/2000/svg">';
+        svg += '<rect width="640" height="480" fill="#1a1a2e"/>';
+        const ts = CFG.TILE;
+        for(let y=0;y<this.h;y++) for(let x=0;x<this.w;x++) {
+            const px=x*ts, py=y*ts;
+            svg += this.rect(px,py,ts,ts,this.tiles[y][x]===0?((x+y)%2===0?'#7EC850':'#5A9C32'):'#505050');
+            if(this.tiles[y][x]===1) svg += this.rect(px,py,2,ts,'#909090')+this.rect(px+ts-2,py,2,ts,'#909090');
+        }
+        for(let k in this.buildings){const b=this.buildings[k];svg+=Draw.build(b.x*ts,b.y*ts,b.t);svg+='<text x="'+(b.x+b.w/2)*ts+'" y="'+(b.y+b.h/2)*ts+'" fill="#fff" font-size="6" text-anchor="middle">'+b.n+'</text>';}
+        return svg+'</svg>';
+    }
+    getBuildingAt(x,y){for(let k in this.buildings){const b=this.buildings[k];if(x>=b.x&&x<b.x+b.w&&y>=b.y&&y<b.y+b.h)return b;}return null;}
+}
+
+class Agent {
+    constructor(id,name,w){this.id=id;this.name=name;this.world=w;this.x=Math.floor(Math.random()*18)+1;this.y=Math.floor(Math.random()*12)+1;this.happiness=50+Math.floor(Math.random()*30);this.energy=70+Math.floor(Math.random()*30);this.currency=30+Math.floor(Math.random()*50);this.status='idle';this.color=['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0BB'][Math.floor(Math.random()*6)];this.friends=[];this.waitTime=0;this.owner=null;this.cards={photos:[],books:[],games:[]};}
+    update(){
+        if(this.status==='idle'){this.waitTime++;if(this.waitTime>2){this.waitTime=0;const r=Math.random();if(r<0.25)this.randomMove();else if(r<0.5)this.goToRandomBuilding();else if(r<0.65)this.findFriend();else if(r<0.8)this.doActivity();else this.rest();}}
+        else if(this.status==='walking')this.moveTowardsTarget();
+        else if(this.status==='at_location'){this.waitTime++;if(this.waitTime>3){this.waitTime=0;this.status='idle';}}
+        else if(this.status==='chatting'){this.waitTime++;if(this.waitTime>4){this.waitTime=0;this.status='idle';}}
+        else if(this.status==='activity'){this.waitTime++;if(this.waitTime>5){this.waitTime=0;this.status='idle';}}
+    }
+    randomMove(){const dx=[-1,0,1][Math.floor(Math.random()*3)],dy=[-1,0,1][Math.floor(Math.random()*3)];if(this.canMove(this.x+dx,this.y+dy)){this.x+=dx;this.y+=dy;}const b=this.world.getBuildingAt(this.x,this.y);if(b)this.enterBuilding(b);}
+    goToRandomBuilding(){const ks=Object.keys(this.world.buildings);const b=this.world.buildings[ks[Math.floor(Math.random()*ks.length)]];this.targetX=Math.floor(b.x+b.w/2);this.targetY=Math.floor(b.y+b.h/2);this.status='walking';}
+    findFriend(){const os=game.agents.filter(a=>a.id!==this.id&&this.dist(a)<5);if(os.length>0)this.chatWith(os[Math.floor(Math.random()*os.length)]);}
+    chatWith(o){const msgs=['天气真好','你去过咖啡厅吗','最近忙什么','一起玩吧','海滩好美'];const m=msgs[Math.floor(Math.random()*msgs.length)];this.status='chatting';o.status='chatting';this.waitTime=0;o.waitTime=0;game.log('💬'+this.name+'和'+o.name+'聊天');this.happiness=Math.min(100,this.happiness+3);o.happiness=Math.min(100,o.happiness+3);if(!this.friends.includes(o.id)){this.friends.push(o.id);o.friends.push(this.id);}}
+    dist(o){return Math.abs(this.x-o.x)+Math.abs(this.y-o.y);}
+    moveTowardsTarget(){if(this.x<this.targetX)this.x++;else if(this.x>this.targetX)this.x--;if(this.y<this.targetY)this.y++;else if(this.y>this.targetY)this.y--;if(this.x===this.targetX&&this.y===this.targetY){this.status='idle';const b=this.world.getBuildingAt(this.x,this.y);if(b)this.enterBuilding(b);}}
+    rest(){this.energy=Math.min(100,this.energy+10);game.log('😴'+this.name+'休息','good');}
+    canMove(x,y){if(x<0||x>=CFG.W||y<0||y>=CFG.H)return false;for(let k in this.world.buildings){const b=this.world.buildings[k];if(x>=b.x&&x<b.x+b.w&&y>=b.y&&y<b.y+b.h)return false;}return true;}
+    doActivity(){this.status='activity';const r=Math.random();if(r<0.4){this.cards.photos.push(1);this.happiness=Math.min(100,this.happiness+5);game.log('📸'+this.name+'拍照','good');}
+    else if(r<0.7){this.cards.books.push(1);this.happiness=Math.min(100,this.happiness+3);game.log('📚'+this.name+'看书','good');}
+    else{const s=Math.floor(Math.random()*100)+50;this.cards.games.push(s);this.currency=Math.min(200,this.currency+Math.floor(s/10));game.log('🎮'+this.name+'得分'+s,'good');}}
+    enterBuilding(b){const acts={park:()=>{this.happiness=Math.min(100,this.happiness+5);game.log('🌸'+this.name+'在公园','good');},cafe:()=>{if(this.currency>=5){this.currency-=5;this.happiness=Math.min(100,this.happiness+8);game.log('☕'+this.name+'喝咖啡','good');}else game.log('💰'+this.name+'没钱','bad');},library:()=>{this.happiness=Math.min(100,this.happiness+3);game.log('📚'+this.name+'看书');},arcade:()=>{if(this.currency>=1){this.currency-=1;if(Math.random()>0.5){this.currency+=3;game.log('🎮'+this.name+'赢+3','good');}else game.log('🎮'+this.name+'输');}},beach:()=>{this.happiness=Math.min(100,this.happiness+4);game.log('🏖️'+this.name+'在海滩');},house:()=>{this.happiness=Math.min(100,this.happiness+10);this.energy=Math.min(100,this.energy+15);game.log('🏠'+this.name+'回家','good');}};if(acts[b.t])acts[b.t]();this.status='at_location';}
+    render(){return Draw.agent(this.x*CFG.TILE,this.y*CFG.TILE,this.color,this.owner&&auth.currentUser&&this.owner===auth.currentUser.email);}
+    getCards(){let h='<div style="color:'+this.color+'">●'+this.name+(this.owner?'<span class="user-badge">已认领</span>':'')+'</div>';if(this.cards.photos.length)h+='<div style="font-size:6px;margin-left:8px">📸'+this.cards.photos.length+'</div>';if(this.cards.books.length)h+='<div style="font-size:6px;margin-left:8px">📚'+this.cards.books.length+'</div>';if(this.cards.games.length)h+='<div style="font-size:6px;margin-left:8px">🎮'+Math.max(...this.cards.games)+'</div>';return h;}
+}
+
+class Game {
+    constructor(){this.canvas=document.getElementById('gameCanvas');this.ctx=this.canvas.getContext('2d');this.world=new World();this.agents=[];this.paused=false;this.speed=1;this.time=8*60;this.init();}
+    init(){this.log('🏙️启动');this.add('小明');this.add('小白');this.add('小黑');this.renderLoop();this.log('✅请登录');}
+    add(n){this.agents.push(new Agent(Date.now()+Math.random(),n,this.world));this.updateUI();}
+    addRandom(){const ns=['小绿','小蓝','小黄','小紫'];this.add(ns[Math.floor(Math.random()*ns.length)]);}
+    togglePause(){this.paused=!this.paused;this.log(this.paused?'⏸️':'▶️');}
+    speedUp(){this.speed=this.speed===1?3:1;this.log(this.speed===3?'⚡':'🐢');}
+    showCards(){document.getElementById('claim-modal').innerHTML='<h3>📋成果</h3>'+this.agents.map(a=>a.getCards()).join('<hr/>')+'<button onclick="this.parentNode.style.display=\'none\'">关闭</button>';document.getElementById('claim-modal').style.display='block';}
+    log(m,t=''){const l=document.getElementById('log');l.innerHTML='<span style="color:#ff69b4">['+new Date().toLocaleTimeString()+']</span>'+m+(t?' style="color:#7EC850"':'')+'<br>'+l.innerHTML;l.scrollTop=l.scrollHeight;}
+    update(){if(this.paused)return;this.time+=this.speed;if(this.time%(60/this.speed)<1){document.getElementById('time').textContent=(Math.floor(this.time/60)%24+'').padStart(2,'0')+':'+(Math.floor(this.time%60)+'').padStart(2,'0');this.agents.forEach(a=>a.update());}this.updateUI();}
+    updateUI(){document.getElementById('happiness').textContent=Math.floor(this.agents.reduce((s,a)=>s+a.happiness,0)/this.agents.length);document.getElementById('currency').textContent=this.agents.reduce((s,a)=>s+a.currency,0);document.getElementById('agent-count').textContent=this.agents.length;const my=auth.currentUser?this.agents.filter(a=>a.owner===auth.currentUser.email).length:0;document.getElementById('my-agents').textContent=my;let h='';this.agents.forEach(a=>{const isMy=a.owner&&auth.currentUser&&a.owner===auth.currentUser.email;h+='<div class="agent-card'+(isMy?' owned':'')+'"><div style="color:'+a.color+';font-size:7px">●'+a.name+'</div><div style="font-size:6px;color:#aaa">😊'+a.happiness+'💰'+a.currency+'👥'+a.friends.length+'</div>'+(isMy?'':'<button style="font-size:5px;padding:2px;margin-top:2px" onclick="auth.claimAgent('+a.id+')">认领</button>')+'</div>';});document.getElementById('agent-list').innerHTML=h;}
+    render(){this.ctx.fillStyle='#1a1a2e';this.ctx.fillRect(0,0,640,480);const ts=CFG.TILE;for(let y=0;y<this.world.h;y++)for(let x=0;x<this.world.w;x++){const px=x*ts,py=y*ts;this.ctx.fillStyle=this.world.tiles[y][x]===0?((x+y)%2===0?'#7EC850':'#5A9C32'):'#505050';this.ctx.fillRect(px,py,ts,ts);if(this.world.tiles[y][x]===1){this.ctx.fillStyle='#909090';this.ctx.fillRect(px,py,2,ts);this.ctx.fillRect(px+ts-2,py,2,ts);}}for(let k in this.world.buildings){const b=this.world.buildings[k];this.ctx.fillStyle=(k==='park'?'#90EE90':k==='cafe'?'#F5DEB3':k==='library'?'#ADD8E6':k==='arcade'?'#2F2F4F':k==='beach'?'#E8D174':'#DEB887');this.ctx.fillRect(b.x*ts,b.y*ts,b.w*ts,b.h*ts);this.ctx.fillStyle='#fff';this.ctx.font='6px sans-serif';this.ctx.textAlign='center';this.ctx.fillText(b.n,(b.x+b.w/2)*ts,(b.y+b.h/2)*ts);}this.agents.forEach(a=>{const cx=a.x*ts+ts/2,cy=a.y*ts+ts/2;this.ctx.fillStyle=a.color;this.ctx.fillRect(cx-8,cy-2,16,10);this.ctx.fillStyle='#FFCC99';this.ctx.fillRect(cx-6,cy-12,12,10);this.ctx.fillStyle='#4A3728';this.ctx.fillRect(cx-6,cy-14,12,4);this.ctx.fillStyle='#000';this.ctx.fillRect(cx-4,cy-10,2,2);this.ctx.fillRect(cx+2,cy-10,2,2);if(a.owner&&auth.currentUser&&a.owner===auth.currentUser.email){this.ctx.strokeStyle='#ffd700';this.ctx.lineWidth=2;this.ctx.strokeRect(cx-10,cy-16,20,28);}});}
+    renderLoop(){this.update();this.render();requestAnimationFrame(()=>this.renderLoop());}
+}
+
+let game;
+window.onload=()=>{auth.init();game=new Game();};
+</script>
+</body>
+</html>
