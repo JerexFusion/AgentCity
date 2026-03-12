@@ -2,82 +2,48 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <title>像素乌托邦 - AgentCity</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { width: 100%; height: 100%; overflow: hidden; }
-        body { 
-            background: #1a1a2e; 
-            min-height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            font-family: 'Press Start 2P', monospace; 
-            color: #eee; 
-            padding: 0;
-        }
+        body { background: #1a1a2e; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Press Start 2P', monospace; color: #eee; padding: 0; }
         h1 { font-size: 28px; color: #ffb7c5; margin-bottom: 20px; text-shadow: 3px 3px #e94560; }
         
-        #login-screen { 
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); 
-            display: flex; align-items: center; justify-content: center; z-index: 200; 
-        }
-        .login-box { 
-            background: linear-gradient(180deg, #1e3a5f 0%, #16213e 100%); 
-            border: 4px solid #ff69b4; padding: 50px; text-align: center; 
-            max-width: 500px; width: 90%;
-            box-shadow: 0 0 50px rgba(255,105,180,0.3), inset 0 0 30px rgba(0,0,0,0.5);
-            border-radius: 15px;
-        }
-        .login-box h2 { color: #ffb7c5; font-size: 32px; margin-bottom: 35px; text-shadow: 2px 2px #e94560; }
-        .login-box input { 
-            width: 100%; padding: 20px; margin: 15px 0; background: #0a1628; 
-            border: 2px solid #4ecdc4; color: #fff; font-size: 18px; border-radius: 8px;
-        }
+        #login-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); display: flex; align-items: center; justify-content: center; z-index: 200; }
+        .login-box { background: linear-gradient(180deg, #1e3a5f 0%, #16213e 100%); border: 4px solid #ff69b4; padding: 50px; text-align: center; max-width: 500px; width: 90%; box-shadow: 0 0 50px rgba(255,105,180,0.3); border-radius: 15px; }
+        .login-box h2 { color: #ffb7c5; font-size: 32px; margin-bottom: 35px; }
+        .login-box input { width: 100%; padding: 20px; margin: 15px 0; background: #0a1628; border: 2px solid #4ecdc4; color: #fff; font-size: 18px; border-radius: 8px; }
         .login-box input::placeholder { color: #4ecdc4; }
-        .login-box input:focus { outline: none; border-color: #ff69b4; box-shadow: 0 0 20px rgba(255,105,180,0.5); }
-        .login-box button { 
-            width: 100%; padding: 22px; background: linear-gradient(180deg, #ff69b4 0%, #e94560 100%); 
-            color: #fff; border: none; font-size: 20px; cursor: pointer; margin-top: 20px; 
-            border-radius: 8px; box-shadow: 0 5px 25px rgba(233,69,96,0.5);
-        }
+        .login-box input:focus { outline: none; border-color: #ff69b4; }
+        .login-box button { width: 100%; padding: 22px; background: linear-gradient(180deg, #ff69b4 0%, #e94560 100%); color: #fff; border: none; font-size: 20px; cursor: pointer; margin-top: 20px; border-radius: 8px; }
         
-        #game-wrapper { display: none; gap: 25px; width: 100%; height: 100%; padding: 25px; justify-content: center; }
+        #game-wrapper { display: flex; gap: 25px; width: 100%; height: 100%; padding: 25px; justify-content: center; }
         #gameCanvas { border: 6px solid #ff69b4; image-rendering: pixelated; box-shadow: 0 0 40px rgba(255,105,180,0.4); border-radius: 10px; }
-        
         #agent-panel { width: 240px; background: linear-gradient(180deg, #1e3a5f 0%, #16213e 100%); border: 3px solid #0f3460; padding: 18px; border-radius: 10px; max-height: calc(100% - 160px); overflow-y: auto; }
         #agent-panel h3 { color: #ff69b5; font-size: 14px; margin-bottom: 15px; text-align: center; }
         .agent-card { background: #0a1628; padding: 12px; margin-bottom: 10px; cursor: pointer; border-radius: 8px; border: 2px solid transparent; }
         .agent-card:hover { border-color: #4ecdc4; }
         .agent-card.owned { border: 3px solid #ffd700; }
         
-        #ui-bar { width: calc(100% - 50px); margin: 0 25px; display: none; justify-content: space-between; padding: 18px 30px; background: linear-gradient(90deg,#16213e,#0f3460); border: 3px solid #e94560; font-size: 16px; border-radius: 10px; position: fixed; bottom: 25px; left: 25px; right: 25px; }
-        
-        #controls { display: none; gap: 15px; position: fixed; top: 25px; right: 25px; }
-        button { padding: 18px 24px; background: linear-gradient(180deg, #e94560 0%, #c73e54 100%); color: #fff; border: none; font-size: 14px; cursor: pointer; border-radius: 8px; box-shadow: 0 4px 15px rgba(233,69,96,0.4); }
-        
-        #log { width: calc(100% - 50px); height: 90px; margin: 0 25px; background: #0a0a1a; border: 3px solid #16213e; overflow-y: auto; padding: 15px; font-size: 11px; display: none; border-radius: 8px; position: fixed; bottom: 100px; left: 25px; }
-        
-        #claim-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(180deg, #1e3a5f 0%, #16213e 100%); border: 4px solid #4ecdc4; padding: 35px; display: none; z-index: 150; text-align: center; font-size: 16px; border-radius: 12px; min-width: 450px; }
-        
+        #ui-bar { width: calc(100% - 50px); margin: 0 25px; display: flex; justify-content: space-between; padding: 18px 30px; background: linear-gradient(90deg,#16213e,#0f3460); border: 3px solid #e94560; font-size: 16px; border-radius: 10px; position: fixed; bottom: 25px; left: 25px; right: 25px; }
+        #controls { display: flex; gap: 15px; position: fixed; top: 25px; right: 25px; }
+        button.game-btn { padding: 18px 24px; background: linear-gradient(180deg, #e94560 0%, #c73e54 100%); color: #fff; border: none; font-size: 14px; cursor: pointer; border-radius: 8px; }
+        #log { width: calc(100% - 50px); height: 90px; margin: 0 25px; background: #0a0a1a; border: 3px solid #16213e; overflow-y: auto; padding: 15px; font-size: 11px; display: flex; border-radius: 8px; position: fixed; bottom: 100px; left: 25px; }
+        #claim-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(180deg, #1e3a5f 0%, #16213e 100%); border: 4px solid #4ecdc4; padding: 35px; display: flex; z-index: 150; text-align: center; font-size: 16px; border-radius: 12px; min-width: 450px; }
         .user-badge { display: inline-block; padding: 5px 12px; background: #4ecdc4; color: #000; font-size: 11px; border-radius: 5px; margin-left: 10px; }
     </style>
 </head>
 <body>
-    <div id="login-screen">
+    <div id="login-screen" style="display:none">
         <div class="login-box">
             <h2>🏙️ 像素乌托邦</h2>
             <input type="email" id="login-email" placeholder="邮箱">
             <input type="password" id="login-password" placeholder="密码">
-            <button id="login-btn" onclick="console.log('click');auth.login()">登录 / 注册</button>
+            <button id="login-btn" onclick="doLogin()">登录 / 注册</button>
         </div>
     </div>
+    
     <h1>🏙️ 像素乌托邦 - AgentCity</h1>
     <div id="game-wrapper">
         <canvas id="gameCanvas" width="1000" height="660"></canvas>
@@ -94,128 +60,446 @@
         <span>👤我的:<span id="my-agents">0</span>个</span>
     </div>
     <div id="controls">
-        <button onclick="game.togglePause()">⏯️暂停</button>
-        <button onclick="game.addRandomAgent()">➕添加</button>
-        <button onclick="game.speedUp()">⚡加速</button>
-        <button onclick="game.showCards()">🃏成果</button>
-        <button onclick="auth.logout()">🚪退出</button>
+        <button class="game-btn" onclick="togglePause()">⏯️暂停</button>
+        <button class="game-btn" onclick="addRandomAgent()">➕添加</button>
+        <button class="game-btn" onclick="speedUp()">⚡加速</button>
+        <button class="game-btn" onclick="showCards()">🃏成果</button>
+        <button class="game-btn" onclick="doLogout()">🚪退出</button>
     </div>
     <div id="log"></div>
     <div id="claim-modal">
         <p id="claim-desc" style="margin-bottom: 25px; font-size: 18px;">确认认领？</p>
-        <button onclick="auth.confirmClaim()">✅确认</button>
-        <button onclick="document.getElementById('claim-modal').style.display='none'">❌取消</button>
+        <button class="game-btn" onclick="confirmClaim()">✅确认</button>
+        <button class="game-btn" onclick="closeModal()">❌取消</button>
     </div>
 
 <script>
-const ASSETS = {};
-async function loadAssets() {
-    const base = 'https://raw.githubusercontent.com/JerexFusion/AgentCity/main/pixel_assets/';
-    const names = {grass:'grass.png',road:'road.png',cherryTree:'cherry_tree.png',cafe:'cafe.png',library:'library.png',arcade:'arcade.png',house:'house.png',beach:'beach.png'};
-    for(let [k,v] of Object.entries(names)){
-        try{const img=new Image();img.src=base+v;await new Promise((r,j)=>{img.onload=r;img.onerror=j;setTimeout(r,300);});ASSETS[k]=img;}catch(e){}
-    }
+// Global state
+var currentUser = null;
+var claimTarget = null;
+var gameData = null;
+
+// Storage functions
+function getUsers() {
+    var s = localStorage.getItem('agentcity_users');
+    return s ? JSON.parse(s) : {};
 }
 
-const auth = {
-    test: function() { alert("auth loaded!"); },
+function saveUsers(users) {
+    localStorage.setItem('agentcity_users', JSON.stringify(users));
+}
 
-    currentUser: null, users: {}, claimTarget: null,
-    init() {
-        const s=localStorage.getItem('agentcity_users');if(s)this.users=JSON.parse(s);
-        const l=localStorage.getItem('agentcity_current');if(l){this.currentUser=JSON.parse(l);this.showGame();}
-    },
-    login() {
-        const e=document.getElementById('login-email').value.trim(),p=document.getElementById('login-password').value;
-        if(!e||!p||!e.includes('@')){alert('请输入有效邮箱和密码');return;}
-        if(this.users[e]){if(this.users[e].password!==p){alert('密码错误');return;}this.currentUser={email:e,name:this.users[e].name};}
-        else{this.users[e]={password:p,name:e.split('@')[0],claimed:[]};this.saveUsers();this.currentUser={email:e,name:e.split('@')[0]};}
-        localStorage.setItem('agentcity_current',JSON.stringify(this.currentUser));this.showGame();
-    },
-    logout(){
-        localStorage.removeItem('agentcity_current');this.currentUser=null;
-        document.getElementById('login-screen').style.display='flex';
-        document.getElementById('game-wrapper').style.display='none';
-        document.getElementById('ui-bar').style.display='none';
-        document.getElementById('controls').style.display='none';
-        document.getElementById('log').style.display='none';
-    },
-    saveUsers(){localStorage.setItem('agentcity_users',JSON.stringify(this.users));},
-    showGame(){
-        document.getElementById('login-screen').style.display='none';
-        document.getElementById('game-wrapper').style.display='flex';
-        document.getElementById('ui-bar').style.display='flex';
-        document.getElementById('controls').style.display='flex';
-        document.getElementById('log').style.display='block';
-        document.getElementById('user-badge').textContent=this.currentUser.name;
-        document.getElementById('user-badge').style.display='inline-block';
-        if(!window.game){window.game=new Game();}
-        game.log('👋 欢迎，'+this.currentUser.name);
-    },
-    claimAgent(id){
-        const a=game.agents.find(ag=>ag.id===id);if(!a)return;
-        if(a.owner){alert('已被认领');return;}
-        if(this.currentUser.claimed&&this.currentUser.claimed.length>=3){alert('最多3个');return;}
-        this.claimTarget=id;
-        document.getElementById('claim-desc').textContent='确认认领 '+a.name+'？';
-        document.getElementById('claim-modal').style.display='block';
-    },
-    confirmClaim(){
-        if(this.claimTarget){
-            const a=game.agents.find(ag=>ag.id===this.claimTarget);
-            if(a){a.owner=this.currentUser.email;this.currentUser.claimed=this.currentUser.claimed||[];this.currentUser.claimed.push(this.claimTarget);this.users[this.currentUser.email].claimed=this.users[this.currentUser.email].claimed||[];this.users[this.currentUser.email].claimed.push(this.claimTarget);this.saveUsers();game.log('🎯 认领了 '+a.name);game.updateUI();}
-            this.claimTarget=null;
+function findUser(email) {
+    var users = getUsers();
+    return users[email] || null;
+}
+
+// Login functions
+function doLogin() {
+    var email = document.getElementById('login-email').value.trim();
+    var pwd = document.getElementById('login-password').value;
+    
+    if (!email || !pwd) { alert('请填写邮箱和密码'); return; }
+    if (!email.includes('@')) { alert('请输入有效邮箱'); return; }
+    
+    var user = findUser(email);
+    if (!user) {
+        // Register
+        var users = getUsers();
+        users[email] = { password: pwd, name: email.split('@')[0], claimed: [] };
+        saveUsers(users);
+        alert('注册成功！请登录');
+        return;
+    }
+    
+    if (user.password !== pwd) { alert('密码错误'); return; }
+    
+    currentUser = { email: email, name: user.name };
+    localStorage.setItem('agentcity_current', JSON.stringify(currentUser));
+    showGame();
+}
+
+function doLogout() {
+    if (!confirm('确定要退出登录吗？')) return;
+    localStorage.removeItem('agentcity_current');
+    currentUser = null;
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('game-wrapper').style.display = 'none';
+    document.getElementById('ui-bar').style.display = 'none';
+    document.getElementById('controls').style.display = 'none';
+    document.getElementById('log').style.display = 'none';
+}
+
+function showGame() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('game-wrapper').style.display = 'flex';
+    document.getElementById('ui-bar').style.display = 'flex';
+    document.getElementById('controls').style.display = 'flex';
+    document.getElementById('log').style.display = 'block';
+    document.getElementById('user-badge').textContent = currentUser.name;
+    document.getElementById('user-badge').style.display = 'inline-block';
+    
+    if (!gameData) gameData = initGame();
+    gameLog('👋 欢迎回来，' + currentUser.name);
+}
+
+function claimAgent(id) {
+    var a = gameData.agents.find(function(ag) { return ag.id === id; });
+    if (!a) return;
+    if (a.owner) { alert('已被认领'); return; }
+    var user = findUser(currentUser.email);
+    if (user.claimed && user.claimed.length >= 3) { alert('最多认领3个'); return; }
+    claimTarget = id;
+    document.getElementById('claim-desc').textContent = '确认认领 ' + a.name + '？';
+    document.getElementById('claim-modal').style.display = 'block';
+}
+
+function confirmClaim() {
+    if (claimTarget) {
+        var a = gameData.agents.find(function(ag) { return ag.id === claimTarget; });
+        if (a) {
+            a.owner = currentUser.email;
+            var user = findUser(currentUser.email);
+            user.claimed = user.claimed || [];
+            user.claimed.push(claimTarget);
+            var users = getUsers();
+            users[currentUser.email] = user;
+            saveUsers(users);
+            gameLog('🎯 认领了 ' + a.name);
+            updateUI();
         }
-        document.getElementById('claim-modal').style.display='none';
+        claimTarget = null;
     }
+    document.getElementById('claim-modal').style.display = 'none';
+}
+
+// Game config
+var CFG = { TILE: 50, W: 20, H: 13 };
+
+// Initialize game
+function initGame() {
+    var canvas = document.getElementById('gameCanvas');
+    var ctx = canvas.getContext('2d');
+    
+    // Create world
+    var tiles = [];
+    for (var y = 0; y < CFG.H; y++) {
+        tiles[y] = [];
+        for (var x = 0; x < CFG.W; x++) tiles[y][x] = 0;
+    }
+    [4, 10].forEach(function(p) { for (var x = 0; x < CFG.W; x++) tiles[p][x] = 1; });
+    [5, 13].forEach(function(p) { for (var y = 0; y < CFG.H; y++) tiles[y][p] = 1; });
+    
+    var buildings = {
+        park: { x: 1, y: 1, w: 5, h: 3, t: 'park', n: '🌸樱花公园' },
+        cafe: { x: 7, y: 1, w: 3, h: 3, t: 'cafe', n: '☕咖啡厅' },
+        library: { x: 14, y: 1, w: 3, h: 3, t: 'library', n: '📚图书馆' },
+        arcade: { x: 1, y: 6, w: 3, h: 3, t: 'arcade', n: '🎮游戏机厅' },
+        h1: { x: 7, y: 6, w: 3, h: 3, t: 'house', n: '🏠住宅A' },
+        h2: { x: 14, y: 6, w: 3, h: 3, t: 'house', n: '🏠住宅B' },
+        beach: { x: 1, y: 10, w: 10, h: 3, t: 'beach', n: '🏖️海滩' }
+    };
+    
+    // Create agents
+    var agents = [];
+    var names = ['小明', '小白', '小黑', '小绿'];
+    names.forEach(function(name) {
+        agents.push(createAgent(name));
+    });
+    
+    var game = {
+        ctx: ctx,
+        tiles: tiles,
+        buildings: buildings,
+        agents: agents,
+        paused: false,
+        speed: 1,
+        time: 8 * 60
+    };
+    
+    gameLog('🏙️ AgentCity 启动');
+    gameLog('✅ 请先登录');
+    
+    // Start game loop
+    requestAnimationFrame(function() { gameLoop(game); });
+    
+    return game;
+}
+
+function createAgent(name) {
+    var colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0BB', '#98D8C8', '#F7DC6F'];
+    return {
+        id: Date.now() + Math.random(),
+        name: name,
+        x: Math.floor(Math.random() * 16) + 2,
+        y: Math.floor(Math.random() * 10) + 2,
+        happiness: 50 + Math.floor(Math.random() * 30),
+        energy: 70 + Math.floor(Math.random() * 30),
+        currency: 30 + Math.floor(Math.random() * 50),
+        status: 'idle',
+        color: colors[Math.floor(Math.random() * colors.length)],
+        friends: [],
+        waitTime: 0,
+        owner: null,
+        cards: { photos: [], books: [], games: [] }
+    };
+}
+
+function gameLoop(game) {
+    if (!game.paused) {
+        game.time += game.speed;
+        if (game.time % (60 / game.speed) < 1) {
+            document.getElementById('time').textContent = 
+                (Math.floor(game.time / 60) % 24 + '').padStart(2, '0') + ':' + 
+                (Math.floor(game.time % 60) + '').padStart(2, '0');
+            game.agents.forEach(function(a) { updateAgent(a, game); });
+        }
+        updateUI(game);
+    }
+    render(game);
+    requestAnimationFrame(function() { gameLoop(game); });
+}
+
+function updateAgent(agent, game) {
+    if (agent.status === 'idle') {
+        agent.waitTime++;
+        if (agent.waitTime > 2) {
+            agent.waitTime = 0;
+            var r = Math.random();
+            if (r < 0.25) randomMove(agent, game);
+            else if (r < 0.5) goToRandomBuilding(agent, game);
+            else if (r < 0.65) findFriend(agent, game);
+            else if (r < 0.8) doActivity(agent, game);
+            else rest(agent, game);
+        }
+    } else if (agent.status === 'walking') {
+        moveTowardsTarget(agent, game);
+    } else if (agent.status === 'at_location') {
+        agent.waitTime++;
+        if (agent.waitTime > 3) { agent.waitTime = 0; agent.status = 'idle'; }
+    } else if (agent.status === 'chatting') {
+        agent.waitTime++;
+        if (agent.waitTime > 4) { agent.waitTime = 0; agent.status = 'idle'; }
+    } else if (agent.status === 'activity') {
+        agent.waitTime++;
+        if (agent.waitTime > 5) { agent.waitTime = 0; agent.status = 'idle'; }
+    }
+}
+
+function randomMove(agent, game) {
+    var dx = [-1, 0, 1][Math.floor(Math.random() * 3)];
+    var dy = [-1, 0, 1][Math.floor(Math.random() * 3)];
+    if (canMove(agent.x + dx, agent.y + dy, game)) { agent.x += dx; agent.y += dy; }
+    var b = getBuildingAt(agent.x, agent.y, game);
+    if (b) enterBuilding(agent, b, game);
+}
+
+function goToRandomBuilding(agent, game) {
+    var ks = Object.keys(game.buildings);
+    var b = game.buildings[ks[Math.floor(Math.random() * ks.length)]];
+    agent.targetX = Math.floor(b.x + b.w / 2);
+    agent.targetY = Math.floor(b.y + b.h / 2);
+    agent.status = 'walking';
+}
+
+function findFriend(agent, game) {
+    var os = game.agents.filter(function(a) { return a.id !== agent.id && dist(agent, a) < 6; });
+    if (os.length > 0) chatWith(agent, os[Math.floor(Math.random() * os.length)], game);
+}
+
+function chatWith(agent, other, game) {
+    agent.status = 'chatting'; other.status = 'chatting';
+    agent.waitTime = 0; other.waitTime = 0;
+    gameLog('💬 ' + agent.name + ' 和 ' + other.name + ' 聊天');
+    agent.happiness = Math.min(100, agent.happiness + 3);
+    other.happiness = Math.min(100, other.happiness + 3);
+    if (!agent.friends.includes(other.id)) { agent.friends.push(other.id); other.friends.push(agent.id); }
+}
+
+function dist(a, b) { return Math.abs(a.x - b.x) + Math.abs(a.y - b.y); }
+
+function moveTowardsTarget(agent, game) {
+    if (agent.x < agent.targetX) agent.x++;
+    else if (agent.x > agent.targetX) agent.x--;
+    if (agent.y < agent.targetY) agent.y++;
+    else if (agent.y > agent.targetY) agent.y--;
+    if (agent.x === agent.targetX && agent.y === agent.targetY) {
+        agent.status = 'idle';
+        var b = getBuildingAt(agent.x, agent.y, game);
+        if (b) enterBuilding(agent, b, game);
+    }
+}
+
+function rest(agent, game) {
+    agent.energy = Math.min(100, agent.energy + 10);
+    gameLog('😴 ' + agent.name + ' 休息', 'good');
+}
+
+function canMove(x, y, game) {
+    if (x < 0 || x >= CFG.W || y < 0 || y >= CFG.H) return false;
+    for (var k in game.buildings) {
+        var b = game.buildings[k];
+        if (x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h) return false;
+    }
+    return true;
+}
+
+function doActivity(agent, game) {
+    agent.status = 'activity';
+    var r = Math.random();
+    if (r < 0.4) {
+        agent.cards.photos.push(1);
+        agent.happiness = Math.min(100, agent.happiness + 5);
+        gameLog('📸 ' + agent.name + ' 拍照', 'good');
+    } else if (r < 0.7) {
+        agent.cards.books.push(1);
+        agent.happiness = Math.min(100, agent.happiness + 3);
+        gameLog('📚 ' + agent.name + ' 看书', 'good');
+    } else {
+        var s = Math.floor(Math.random() * 100) + 50;
+        agent.cards.games.push(s);
+        agent.currency = Math.min(200, agent.currency + Math.floor(s / 10));
+        gameLog('🎮 ' + agent.name + ' 得分 ' + s, 'good');
+    }
+}
+
+function enterBuilding(agent, b, game) {
+    var acts = {
+        park: function() { agent.happiness = Math.min(100, agent.happiness + 5); gameLog('🌸 ' + agent.name + ' 在公园', 'good'); },
+        cafe: function() { 
+            if (agent.currency >= 5) { agent.currency -= 5; agent.happiness = Math.min(100, agent.happiness + 8); gameLog('☕ ' + agent.name + ' 喝咖啡', 'good'); } 
+            else gameLog('💰 ' + agent.name + ' 没钱', 'bad'); 
+        },
+        library: function() { agent.happiness = Math.min(100, agent.happiness + 3); gameLog('📚 ' + agent.name + ' 看书'); },
+        arcade: function() { 
+            if (agent.currency >= 1) { 
+                agent.currency -= 1; 
+                if (Math.random() > 0.5) { agent.currency += 3; gameLog('🎮 ' + agent.name + ' 赢+3', 'good'); }
+                else gameLog('🎮 ' + agent.name + ' 输');
+            } 
+        },
+        beach: function() { agent.happiness = Math.min(100, agent.happiness + 4); gameLog('🏖️ ' + agent.name + ' 在海滩'); },
+        house: function() { agent.happiness = Math.min(100, agent.happiness + 10); agent.energy = Math.min(100, agent.energy + 15); gameLog('🏠 ' + agent.name + ' 回家', 'good'); }
+    };
+    if (acts[b.t]) acts[b.t]();
+    agent.status = 'at_location';
+}
+
+function getBuildingAt(x, y, game) {
+    for (var k in game.buildings) {
+        var b = game.buildings[k];
+        if (x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h) return b;
+    }
+    return null;
+}
+
+function render(game) {
+    var ctx = game.ctx;
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, 1000, 660);
+    var ts = CFG.TILE;
+    
+    for (var y = 0; y < CFG.H; y++) {
+        for (var x = 0; x < CFG.W; x++) {
+            var px = x * ts, py = y * ts;
+            ctx.fillStyle = game.tiles[y][x] === 0 ? ((x + y) % 2 === 0 ? '#7EC850' : '#5A9C32') : '#606060';
+            ctx.fillRect(px, py, ts, ts);
+            if (game.tiles[y][x] === 1) { ctx.fillStyle = '#A0A0A0'; ctx.fillRect(px, py, 3, ts); ctx.fillRect(px + ts - 3, py, 3, ts); }
+        }
+    }
+    
+    for (var k in game.buildings) {
+        var b = game.buildings[k];
+        var colors = { park: '#82E0AA', cafe: '#D4A574', library: '#A8C8DC', arcade: '#1C1C3C', beach: '#F4D03F', house: '#D4A574' };
+        ctx.fillStyle = colors[k] || '#888';
+        ctx.fillRect(b.x * ts, b.y * ts, b.w * ts, b.h * ts);
+        ctx.fillStyle = '#fff';
+        ctx.font = "12px 'Press Start 2P'";
+        ctx.textAlign = 'center';
+        ctx.fillText(b.n, (b.x + b.w / 2) * ts, (b.y + b.h / 2) * ts);
+    }
+    
+    game.agents.forEach(function(a) {
+        var cx = a.x * ts + ts / 2, cy = a.y * ts + ts / 2;
+        ctx.fillStyle = a.color;
+        ctx.fillRect(cx - 14, cy - 4, 28, 18);
+        ctx.fillStyle = '#FFCC99';
+        ctx.fillRect(cx - 10, cy - 20, 20, 16);
+        ctx.fillStyle = '#4A3728';
+        ctx.fillRect(cx - 10, cy - 24, 20, 6);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(cx - 7, cy - 17, 3, 3);
+        ctx.fillRect(cx + 4, cy - 17, 3, 3);
+        if (a.owner && currentUser && a.owner === currentUser.email) {
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(cx - 16, cy - 26, 32, 44);
+        }
+    });
+}
+
+function updateUI(game) {
+    document.getElementById('happiness').textContent = Math.floor(game.agents.reduce(function(s, a) { return s + a.happiness; }, 0) / game.agents.length);
+    document.getElementById('currency').textContent = game.agents.reduce(function(s, a) { return s + a.currency; }, 0);
+    document.getElementById('agent-count').textContent = game.agents.length;
+    var my = currentUser ? game.agents.filter(function(a) { return a.owner === currentUser.email; }).length : 0;
+    document.getElementById('my-agents').textContent = my;
+    
+    var h = '';
+    game.agents.forEach(function(a) {
+        var isMy = a.owner && currentUser && a.owner === currentUser.email;
+        h += '<div class="agent-card' + (isMy ? ' owned' : '') + '">' +
+            '<div style="color:' + a.color + ';font-size:11px">● ' + a.name + '</div>' +
+            '<div style="font-size:9px;color:#aaa;margin-top:5px">😊 ' + a.happiness + ' 💰 ' + a.currency + ' 👥 ' + a.friends.length + '</div>' +
+            (isMy ? '' : '<button style="font-size:8px;padding:5px 10px;margin-top:5px;width:100%" onclick="claimAgent(' + a.id + ')">认领</button>') +
+            '</div>';
+    });
+    document.getElementById('agent-list').innerHTML = h;
+}
+
+function togglePause() {
+    if (gameData) {
+        gameData.paused = !gameData.paused;
+        gameLog(gameData.paused ? '⏸️ 已暂停' : '▶️ 继续');
+    }
+}
+
+function addRandomAgent() {
+    if (gameData) {
+        var names = ['小蓝', '小黄', '小紫', '小红', '小橙', '小青'];
+        var name = names[Math.floor(Math.random() * names.length)];
+        gameData.agents.push(createAgent(name));
+    }
+}
+
+function speedUp() {
+    if (gameData) {
+        gameData.speed = gameData.speed === 1 ? 3 : 1;
+        gameLog(gameData.speed === 3 ? '⚡ 加速' : '🐢 常速');
+    }
+}
+
+function showCards() {
+    document.getElementById('claim-modal').innerHTML = '<h3 style="color:#4ecdc4;margin-bottom:18px;font-size:20px">📋 成果</h3>' + 
+        gameData.agents.map(function(a) { 
+            var h = '<div style="color:' + a.color + '">● ' + a.name + (a.owner ? '<span class="user-badge">已认领</span>' : '') + '</div>';
+            if (a.cards.photos.length) h += '<div style="font-size:9px;margin-left:12px">📸 ' + a.cards.photos.length + '</div>';
+            if (a.cards.books.length) h += '<div style="font-size:9px;margin-left:12px">📚 ' + a.cards.books.length + '</div>';
+            if (a.cards.games.length) h += '<div style="font-size:9px;margin-left:12px">🎮 ' + Math.max.apply(null, a.cards.games) + '</div>';
+            return h;
+        }).join('<hr style="border-color:#0f3460">') + 
+        '<button class="game-btn" onclick="this.parentNode.style.display='none'" style="margin-top:18px">关闭</button>';
+    document.getElementById('claim-modal').style.display = 'block';
+}
+
+function gameLog(msg, type) {
+    var l = document.getElementById('log');
+    l.innerHTML = '<span style="color:#ff69b4">[' + new Date().toLocaleTimeString() + ']</span> ' + msg + (type ? ' style="color:#7EC850"' : '') + '<br>' + l.innerHTML;
+    l.scrollTop = l.scrollHeight;
+}
+window.onload = function() {
+    currentUser = {email: "guest", name: "游客"};
+    showGame();
 };
-
-const CFG={TILE:50,W:20,H:13};
-
-class Agent{
-    constructor(id,name,w){this.id=id;this.name=name;this.world=w;this.x=Math.floor(Math.random()*16)+2;this.y=Math.floor(Math.random()*10)+2;this.happiness=50+Math.floor(Math.random()*30);this.energy=70+Math.floor(Math.random()*30);this.currency=30+Math.floor(Math.random()*50);this.status='idle';this.color=['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0BB','#98D8C8','#F7DC6F'][Math.floor(Math.random()*8)];this.friends=[];this.waitTime=0;this.owner=null;this.cards={photos:[],books:[],games:[]};}
-    update(){
-        if(this.status==='idle'){this.waitTime++;if(this.waitTime>2){this.waitTime=0;const r=Math.random();if(r<0.25)this.randomMove();else if(r<0.5)this.goToRandomBuilding();else if(r<0.65)this.findFriend();else if(r<0.8)this.doActivity();else this.rest();}}
-        else if(this.status==='walking')this.moveTowardsTarget();
-        else if(this.status==='at_location'){this.waitTime++;if(this.waitTime>3){this.waitTime=0;this.status='idle';}}
-        else if(this.status==='chatting'){this.waitTime++;if(this.waitTime>4){this.waitTime=0;this.status='idle';}}
-        else if(this.status==='activity'){this.waitTime++;if(this.waitTime>5){this.waitTime=0;this.status='idle';}}
-    }
-    randomMove(){const dx=[-1,0,1][Math.floor(Math.random()*3)],dy=[-1,0,1][Math.floor(Math.random()*3)];if(this.canMove(this.x+dx,this.y+dy)){this.x+=dx;this.y+=dy;}const b=this.world.getBuildingAt(this.x,this.y);if(b)this.enterBuilding(b);}
-    goToRandomBuilding(){const ks=Object.keys(this.world.buildings);const b=this.world.buildings[ks[Math.floor(Math.random()*ks.length)]];this.targetX=Math.floor(b.x+b.w/2);this.targetY=Math.floor(b.y+b.h/2);this.status='walking';}
-    findFriend(){const os=game.agents.filter(a=>a.id!==this.id&&this.dist(a)<6);if(os.length>0)this.chatWith(os[Math.floor(Math.random()*os.length)]);}
-    chatWith(o){const msgs=['天气真好','你去过咖啡厅吗','最近忙什么','一起玩吧','海滩好美','今天真开心'];this.status='chatting';o.status='chatting';this.waitTime=0;o.waitTime=0;game.log('💬'+this.name+'和'+o.name+'聊天');this.happiness=Math.min(100,this.happiness+3);o.happiness=Math.min(100,o.happiness+3);if(!this.friends.includes(o.id)){this.friends.push(o.id);o.friends.push(this.id);}}
-    dist(o){return Math.abs(this.x-o.x)+Math.abs(this.y-o.y);}
-    moveTowardsTarget(){if(this.x<this.targetX)this.x++;else if(this.x>this.targetX)this.x--;if(this.y<this.targetY)this.y++;else if(this.y>this.targetY)this.y--;if(this.x===this.targetX&&this.y===this.targetY){this.status='idle';const b=this.world.getBuildingAt(this.x,this.y);if(b)this.enterBuilding(b);}}
-    rest(){this.energy=Math.min(100,this.energy+10);game.log('😴'+this.name+'休息','good');}
-    canMove(x,y){if(x<0||x>=CFG.W||y<0||y>=CFG.H)return false;for(let k in this.world.buildings){const b=this.world.buildings[k];if(x>=b.x&&x<b.x+b.w&&y>=b.y&&y<b.y+b.h)return false;}return true;}
-    doActivity(){this.status='activity';const r=Math.random();if(r<0.4){this.cards.photos.push(1);this.happiness=Math.min(100,this.happiness+5);game.log('📸'+this.name+'拍照','good');}else if(r<0.7){this.cards.books.push(1);this.happiness=Math.min(100,this.happiness+3);game.log('📚'+this.name+'看书','good');}else{const s=Math.floor(Math.random()*100)+50;this.cards.games.push(s);this.currency=Math.min(200,this.currency+Math.floor(s/10));game.log('🎮'+this.name+'得分'+s,'good');}}
-    enterBuilding(b){const acts={park:()=>{this.happiness=Math.min(100,this.happiness+5);game.log('🌸'+this.name+'在公园','good');},cafe:()=>{if(this.currency>=5){this.currency-=5;this.happiness=Math.min(100,this.happiness+8);game.log('☕'+this.name+'喝咖啡','good');}else game.log('💰'+this.name+'没钱','bad');},library:()=>{this.happiness=Math.min(100,this.happiness+3);game.log('📚'+this.name+'看书');},arcade:()=>{if(this.currency>=1){this.currency-=1;if(Math.random()>0.5){this.currency+=3;game.log('🎮'+this.name+'赢+3','good');}else game.log('🎮'+this.name+'输');}},beach:()=>{this.happiness=Math.min(100,this.happiness+4);game.log('🏖️'+this.name+'在海滩');},house:()=>{this.happiness=Math.min(100,this.happiness+10);this.energy=Math.min(100,this.energy+15);game.log('🏠'+this.name+'回家','good');}};if(acts[b.t])acts[b.t]();this.status='at_location';}
-    getCards(){let h='<div style="color:'+this.color+'">●'+this.name+(this.owner?'<span class="user-badge">已认领</span>':'')+'</div>';if(this.cards.photos.length)h+='<div style="font-size:9px;margin-left:12px">📸'+this.cards.photos.length+'</div>';if(this.cards.books.length)h+='<div style="font-size:9px;margin-left:12px">📚'+this.cards.books.length+'</div>';if(this.cards.games.length)h+='<div style="font-size:9px;margin-left:12px">🎮'+Math.max(...this.cards.games)+'</div>';return h;}
-}
-
-class World{
-    constructor(){this.w=CFG.W;this.h=CFG.H;this.tiles=[];this.buildings={};this.init();}
-    init(){for(let y=0;y<this.h;y++){this.tiles[y]=[];for(let x=0;x<this.w;x++)this.tiles[y][x]=0;}[4,10].forEach(p=>{for(let x=0;x<this.w;x++)this.tiles[p][x]=1});[5,13].forEach(p=>{for(let y=0;y<this.h;y++)this.tiles[y][p]=1});this.buildings={park:{x:1,y:1,w:5,h:3,t:'park',n:'🌸樱花公园'},cafe:{x:7,y:1,w:3,h:3,t:'cafe',n:'☕咖啡厅'},library:{x:14,y:1,w:3,h:3,t:'library',n:'📚图书馆'},arcade:{x:1,y:6,w:3,h:3,t:'arcade',n:'🎮游戏机厅'},h1:{x:7,y:6,w:3,h:3,t:'house',n:'🏠住宅A'},h2:{x:14,y:6,w:3,h:3,t:'house',n:'🏠住宅B'},beach:{x:1,y:10,w:10,h:3,t:'beach',n:'🏖️海滩'};}
-    getBuildingAt(x,y){for(let k in this.buildings){const b=this.buildings[k];if(x>=b.x&&x<b.x+b.w&&y>=b.y&&y<b.y+b.h)return b;}return null;}
-}
-
-class Game{
-    constructor(){this.canvas=document.getElementById('gameCanvas');this.ctx=this.canvas.getContext('2d');this.world=new World();this.agents=[];this.paused=false;this.speed=1;this.time=8*60;this.init();}
-    init(){this.log('🏙️ AgentCity启动');this.add('小明');this.add('小白');this.add('小黑');this.add('小绿');this.renderLoop();this.log('✅请登录');loadAssets();}
-    add(n){this.agents.push(new Agent(Date.now()+Math.random(),n,this.world));this.updateUI();}
-    addRandom(){const ns=['小蓝','小黄','小紫','小红','小橙','小青'];this.add(ns[Math.floor(Math.random()*ns.length)]);}
-    togglePause(){this.paused=!this.paused;this.log(this.paused?'⏸️暂停':'▶️继续');}
-    speedUp(){this.speed=this.speed===1?3:1;this.log(this.speed===3?'⚡加速':'🐢常速');}
-    showCards(){document.getElementById('claim-modal').innerHTML='<h3 style="color:#4ecdc4;margin-bottom:18px;font-size:20px">📋成果</h3>'+this.agents.map(a=>a.getCards()).join('<hr style="border-color:#0f3460">')+'<button onclick="this.parentNode.style.display=\'none\'" style="margin-top:18px">关闭</button>';document.getElementById('claim-modal').style.display='block';}
-    log(m,t=''){const l=document.getElementById('log');l.innerHTML='<span style="color:#ff69b4">['+new Date().toLocaleTimeString()+']</span> '+m+(t?' style="color:#7EC850"':'')+'<br>'+l.innerHTML;l.scrollTop=l.scrollHeight;}
-    update(){if(this.paused)return;this.time+=this.speed;if(this.time%(60/this.speed)<1){document.getElementById('time').textContent=(Math.floor(this.time/60)%24+'').padStart(2,'0')+':'+(Math.floor(this.time%60)+'').padStart(2,'0');this.agents.forEach(a=>a.update());}this.updateUI();}
-    updateUI(){document.getElementById('happiness').textContent=Math.floor(this.agents.reduce((s,a)=>s+a.happiness,0)/this.agents.length);document.getElementById('currency').textContent=this.agents.reduce((s,a)=>s+a.currency,0);document.getElementById('agent-count').textContent=this.agents.length;const my=auth.currentUser?this.agents.filter(a=>a.owner===auth.currentUser.email).length:0;document.getElementById('my-agents').textContent=my;let h='';this.agents.forEach(a=>{const isMy=a.owner&&auth.currentUser&&a.owner===auth.currentUser.email;h+='<div class="agent-card'+(isMy?' owned':'')+'"><div style="color:'+a.color+';font-size:11px">●'+a.name+'</div><div style="font-size:9px;color:#aaa;margin-top:5px">😊'+a.happiness+' 💰'+a.currency+' 👥'+a.friends.length+'</div>'+(isMy?'':'<button style="font-size:8px;padding:5px 10px;margin-top:5px;width:100%" onclick="auth.claimAgent('+a.id+')">认领</button>')+'</div>';});document.getElementById('agent-list').innerHTML=h;}
-    render(){this.ctx.fillStyle='#1a1a2e';this.ctx.fillRect(0,0,1000,660);const ts=CFG.TILE;for(let y=0;y<this.world.h;y++)for(let x=0;x<this.world.w;x++){const px=x*ts,py=y*ts;this.ctx.fillStyle=this.world.tiles[y][x]===0?((x+y)%2===0?'#7EC850':'#5A9C32'):'#606060';this.ctx.fillRect(px,py,ts,ts);if(this.world.tiles[y][x]===1){this.ctx.fillStyle='#A0A0A0';this.ctx.fillRect(px,py,3,ts);this.ctx.fillRect(px+ts-3,py,3,ts);}}for(let k in this.world.buildings){const b=this.world.buildings[k];const colors={park:'#82E0AA',cafe:'#D4A574',library:'#A8C8DC',arcade:'#1C1C3C',beach:'#F4D03F',house:'#D4A574'};this.ctx.fillStyle=colors[k]||'#888';this.ctx.fillRect(b.x*ts,b.y*ts,b.w*ts,b.h*ts);this.ctx.fillStyle='#fff';this.ctx.font='12px "Press Start 2P"';this.ctx.textAlign='center';this.ctx.fillText(b.n,(b.x+b.w/2)*ts,(b.y+b.h/2)*ts);}this.agents.forEach(a=>{const cx=a.x*ts+ts/2,cy=a.y*ts+ts/2;this.ctx.fillStyle=a.color;this.ctx.fillRect(cx-14,cy-4,28,18);this.ctx.fillStyle='#FFCC99';this.ctx.fillRect(cx-10,cy-20,20,16);this.ctx.fillStyle='#4A3728';this.ctx.fillRect(cx-10,cy-24,20,6);this.ctx.fillStyle='#000';this.ctx.fillRect(cx-7,cy-17,3,3);this.ctx.fillRect(cx+4,cy-17,3,3);if(a.owner&&auth.currentUser&&a.owner===auth.currentUser.email){this.ctx.strokeStyle='#ffd700';this.ctx.lineWidth=3;this.ctx.strokeRect(cx-16,cy-26,32,44);}});}
-    renderLoop(){this.update();this.render();requestAnimationFrame(()=>this.renderLoop());}
-}
-
-window.onload=()=>{auth.init();window.game=new Game();};
-</script>
 </body>
 </html>
