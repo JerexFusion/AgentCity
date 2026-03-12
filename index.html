@@ -144,7 +144,7 @@ const auth = {
         document.getElementById('log').style.display='block';
         document.getElementById('user-badge').textContent=this.currentUser.name;
         document.getElementById('user-badge').style.display='inline-block';
-        if(!window.game)window.game=new Game();
+        if(!window.game){window.game=new Game();}
         game.log('👋 欢迎，'+this.currentUser.name);
     },
     claimAgent(id){
@@ -210,7 +210,7 @@ class Game{
     renderLoop(){this.update();this.render();requestAnimationFrame(()=>this.renderLoop());}
 }
 
-window.onload=()=>{auth.init();game=new Game();};
+window.onload=()=>{auth.init();window.game=new Game();};
 </script>
 </body>
 </html>
